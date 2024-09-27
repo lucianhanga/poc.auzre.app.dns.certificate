@@ -188,7 +188,16 @@ else
         echo "Exiting..."
         exit 0
     fi
+    # give the service principal contributor access to the subscription
+    az role assignment create --role Contributor --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1  
+    # write with green color check mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
+    # give the service principal User Access Administrator access to the subscription
+    az role assignment create --role "User Access Administrator" --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1
+    # write with green color check mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the subscription\e[0m"
 fi
+    
 
 # get the ObjectId of the service principal
 SP_OBJECT_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].id" -o tsv)

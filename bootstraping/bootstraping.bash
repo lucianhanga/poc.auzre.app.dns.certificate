@@ -168,8 +168,9 @@ if [ "$SP_EXISTS" -gt 0 ]; then
         fi
     else
         # with yellow color and a yellow triangle and the message
-        echo -e "\e[33m\xE2\x9A\xA0 Use --regenerate-secret to regenerate the service principal secret\e[0m"
+        echo -e "\e[33m   --regenerate-secret to regenerate the service principal secret\e[0m"
         # finish the script
+        echo "No modifications done to the service principal and the local files and GitHub secrets"
         echo "Exiting..."
         exit 0
     fi
@@ -184,8 +185,22 @@ else
     else
         # with red color x mark and the message
         echo -e "\e[31m\xE2\x9C\x98 Service principal creation failed\e[0m"
+        echo "Exiting..."
+        exit 0
     fi
+    # give the service principal contributor access to the subscription
+    az role assignment create --role Contributor --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1  
+    # write with green color check mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
+    # give the service principal User Access Administrator access to the subscription
+    az role assignment create --role "User Access Administrator" --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1
+    # write with green color check mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the subscription\e[0m"
 fi
+    
+
+# get the ObjectId of the service principal
+SP_OBJECT_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].id" -o tsv)
 
 # extract the values from the json and save them in the variables
 AZURE_CLIENT_ID=$(echo $SP_JSON | jq -r .appId)
@@ -198,6 +213,7 @@ echo "client_id=$AZURE_CLIENT_ID" > ../terraform/terraform.tfvars
 echo "client_secret=$AZURE_CLIENT_SECRET" >> ../terraform/terraform.tfvars
 echo "tenant_id=$AZURE_TENANT_ID" >> ../terraform/terraform.tfvars
 echo "subscription_id=$AZURE_SUBSCRIPTION_ID" >> ../terraform/terraform.tfvars
+echo "object_id=$SP_OBJECT_ID" >> ../terraform/terraform.tfvars
 echo "location=$LOCATION" >> ../terraform/terraform.tfvars
 echo "resource_group_name=$RESOURCE_GROUP" >> ../terraform/terraform.tfvars
 echo "project_name=$PROJECT" >> ../terraform/terraform.tfvars
@@ -207,6 +223,7 @@ gh secret set AZURE_CLIENT_ID -b $AZURE_CLIENT_ID
 gh secret set AZURE_CLIENT_SECRET -b $AZURE_CLIENT_SECRET
 gh secret set AZURE_TENANT_ID -b $AZURE_TENANT_ID
 gh secret set AZURE_SUBSCRIPTION_ID -b $AZURE_SUBSCRIPTION_ID
+gh secret set AZURE_OBJECT_ID -b $SP_OBJECT_ID
 
 gh secret set AZURE_CREDENTIALS -b "$(jq -n \
   --arg clientId "$AZURE_CLIENT_ID" \
@@ -215,13 +232,15 @@ gh secret set AZURE_CREDENTIALS -b "$(jq -n \
   --arg tenantId "$AZURE_TENANT_ID" \
   '{clientId: $clientId, clientSecret: $clientSecret, subscriptionId: $subscriptionId, tenantId: $tenantId}')"
 
-  gh secret set PAT_TOKEN -b $GITHUB_TOKEN
+gh secret set PAT_TOKEN -b $GITHUB_TOKEN
 
 # update the repo variables with the values
 gh variable set AZURE_LOCATION -b $LOCATION
 gh variable set AZURE_GROUP_NAME -b $RESOURCE_GROUP
 gh variable set PROJECT_NAME -b $PROJECT
 
+# print that the secrets and variables are updated with green color
+echo -e "\e[32m\xE2\x9C\x94 GitHub secrets and variables updated successfully\e[0m"
 
 
 

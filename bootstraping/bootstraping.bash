@@ -1,13 +1,32 @@
 #!/bin/bash
 
-# load the github token from th .env file
-source .env
 
 # Function to show usage
 usage() {
   echo "Usage: $0 --project <name> --location <location> --group <resource-group-name> --sp <service-principal-name> --regenerate-secret"
   exit 1
 }
+
+
+# check if the ".env" file exists
+if [ -f .env ]; then
+  # with green color checked mark and the message
+  echo -e "\e[32m\xE2\x9C\x94 .env file found\e[0m"
+  # warn that now the github token will changed and has only read access on the source code
+  echo -e "\e[33m\xE2\x9A\xA0 GitHub token will be changed to read-only access\e[0m"
+  # old github token
+  echo -e "old GITHUB_TOKEN=\033[0;31m$GITHUB_TOKEN\033[0m"
+  # source the .env file  
+  source .env
+  echo -e "new GITHUB_TOKEN=\033[0;32m$GITHUB_TOKEN\033[0m"
+else
+  # with red color x mark and the message
+  echo -e "\e[31m\xE2\x9C\x98 .env file not found\e[0m"
+  # finish the script
+  echo "Exiting..."
+  exit 0
+fi
+
 
 # Initialize variables
 LOCATION=""

@@ -28,6 +28,19 @@ echo -e "resource_group_name=\033[0;32m$resource_group_name\033[0m"
 echo -e "project_name=\033[0;32m$project_name\033[0m"
 
 # login to azure using the service principal
+# warn that login with this credentials will reduce the capabilities of the azure cli with yellow color
+echo -e "\e[33m\xE2\x9A\xA0 Logging in to Azure with service principal will reduce the capabilities of the Azure CLI\e[0m"
+# ask for confirmation
+read -p "Do you want to continue? (y/n) " -n 1 -r
+echo
+# if the answer is not y
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    # with red color x mark and message
+    echo -e "\e[31m\xE2\x9C\x98 Azure login cancelled\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
 az login --service-principal --username $client_id --password $client_secret --tenant $tenant_id 
 
 # check if the login was successful

@@ -207,16 +207,32 @@ else
         echo "Exiting..."
         exit 0
     fi
-    # give the service principal contributor access to the subscription
-    az role assignment create --role Contributor --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1  
-    # write with green color check mark and the message
-    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
-    # give the service principal User Access Administrator access to the subscription
-    az role assignment create --role "User Access Administrator" --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1
-    # write with green color check mark and the message
-    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the subscription\e[0m"
 fi
-    
+
+# give the service principal contributor access to the subscription
+az role assignment create \
+    --role Contributor \
+    --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) \
+    --scope /subscriptions/$(az account show --query id -o tsv) > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Service principal does not have Contributor access to the subscription\e[0m"
+fi
+# give the service principal User Access Administrator access to the group 
+az role assignment create \
+    --role "User Access Administrator" \
+    --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) \
+    --scope /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the resource group\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Service principal does not have User Access Administrator access to the resource group\e[0m"
+fi
 
 # get the ObjectId of the service principal
 SP_OBJECT_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].id" -o tsv)

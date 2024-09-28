@@ -277,6 +277,57 @@ gh variable set PROJECT_NAME -b $PROJECT
 # print that the secrets and variables are updated with green color
 echo -e "\e[32m\xE2\x9C\x94 GitHub secrets and variables updated successfully\e[0m"
 
+# create the terraform storage account which will be used to store the terraform state
+# create the name of the storage account by appending a random number to the project name
+STORAGE_ACCOUNT_NAME=$PROJECT$RANDOM
+az storage account create \
+  --name $STORAGE_ACCOUNT_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Standard_LRS \
+  --allow-blob-public-access false > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Storage account created successfully\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Storage account creation failed\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
+
+# create the container in the storage account which will be used to store the terraform state
+az storage container create \
+  --name tfstate \
+  --account-name $STORAGE_ACCOUNT_NAME > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Storage container created successfully\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Storage container creation failed\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
+
+# save the storage account name and the container name in the terrform backend tf file
+echo resource_group_name  = \"$RESOURCE_GROUP\" > ../terraform/backend.tfvars
+echo storage_account_name = \"$STORAGE_ACCOUNT_NAME\" >> ../terraform/backend.tfvars
+echo container_name       = \"tfstate\" >> ../terraform/backend.tfvars
+
+# save it in the github variables
+gh variable set TERRAFORM_STORAGE_ACCOUNT_NAME -b $STORAGE_ACCOUNT_NAME
+gh variable set TERRAFORM_CONTAINER_NAME -b "tfstate"
+
+
+
+
+
+
+
+
 
 
 

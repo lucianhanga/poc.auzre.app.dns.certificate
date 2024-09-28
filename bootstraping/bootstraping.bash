@@ -1,13 +1,32 @@
 #!/bin/bash
 
-# load the github token from th .env file
-source .env
 
 # Function to show usage
 usage() {
   echo "Usage: $0 --project <name> --location <location> --group <resource-group-name> --sp <service-principal-name> --regenerate-secret"
   exit 1
 }
+
+
+# check if the ".env" file exists
+if [ -f .env ]; then
+  # with green color checked mark and the message
+  echo -e "\e[32m\xE2\x9C\x94 .env file found\e[0m"
+  # warn that now the github token will changed and has only read access on the source code
+  echo -e "\e[33m\xE2\x9A\xA0 GitHub token will be changed to read-only access\e[0m"
+  # old github token
+  echo -e "old GITHUB_TOKEN=\033[0;31m$GITHUB_TOKEN\033[0m"
+  # source the .env file  
+  source .env
+  echo -e "new GITHUB_TOKEN=\033[0;32m$GITHUB_TOKEN\033[0m"
+else
+  # with red color x mark and the message
+  echo -e "\e[31m\xE2\x9C\x98 .env file not found\e[0m"
+  # finish the script
+  echo "Exiting..."
+  exit 0
+fi
+
 
 # Initialize variables
 LOCATION=""
@@ -188,16 +207,32 @@ else
         echo "Exiting..."
         exit 0
     fi
-    # give the service principal contributor access to the subscription
-    az role assignment create --role Contributor --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1  
-    # write with green color check mark and the message
-    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
-    # give the service principal User Access Administrator access to the subscription
-    az role assignment create --role "User Access Administrator" --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) > /dev/null 2>&1
-    # write with green color check mark and the message
-    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the subscription\e[0m"
 fi
-    
+
+# give the service principal contributor access to the subscription
+az role assignment create \
+    --role Contributor \
+    --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) \
+    --scope /subscriptions/$(az account show --query id -o tsv) > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has Contributor access to the subscription\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Service principal does not have Contributor access to the subscription\e[0m"
+fi
+# give the service principal User Access Administrator access to the group 
+az role assignment create \
+    --role "User Access Administrator" \
+    --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv) \
+    --scope /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Service principal has User Access Administrator access to the resource group\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Service principal does not have User Access Administrator access to the resource group\e[0m"
+fi
 
 # get the ObjectId of the service principal
 SP_OBJECT_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].id" -o tsv)
@@ -241,6 +276,57 @@ gh variable set PROJECT_NAME -b $PROJECT
 
 # print that the secrets and variables are updated with green color
 echo -e "\e[32m\xE2\x9C\x94 GitHub secrets and variables updated successfully\e[0m"
+
+# create the terraform storage account which will be used to store the terraform state
+# create the name of the storage account by appending a random number to the project name
+STORAGE_ACCOUNT_NAME=$PROJECT$RANDOM
+az storage account create \
+  --name $STORAGE_ACCOUNT_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku Standard_LRS \
+  --allow-blob-public-access false > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Storage account created successfully\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Storage account creation failed\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
+
+# create the container in the storage account which will be used to store the terraform state
+az storage container create \
+  --name tfstate \
+  --account-name $STORAGE_ACCOUNT_NAME > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 Storage container created successfully\e[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 Storage container creation failed\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
+
+# save the storage account name and the container name in the terrform backend tf file
+echo resource_group_name  = \"$RESOURCE_GROUP\" > ../terraform/backend.tfvars
+echo storage_account_name = \"$STORAGE_ACCOUNT_NAME\" >> ../terraform/backend.tfvars
+echo container_name       = \"tfstate\" >> ../terraform/backend.tfvars
+
+# save it in the github variables
+gh variable set TERRAFORM_STORAGE_ACCOUNT_NAME -b $STORAGE_ACCOUNT_NAME
+gh variable set TERRAFORM_CONTAINER_NAME -b "tfstate"
+
+
+
+
+
+
+
 
 
 

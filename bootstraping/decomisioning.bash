@@ -162,6 +162,8 @@ fi
 if [ -f .env ]; then
   # with green color checked mark and the message
   echo -e "\e[32m\xE2\x9C\x94 .env file found\e[0m"
+  # warn that now the github token will changed and has only read access on the source code
+  echo -e "\e[33m\xE2\x9A\xA0 GitHub token will be changed to read-only access\e[0m"
   source .env
   echo -e "GITHUB_TOKEN=\033[0;32m$GITHUB_TOKEN\033[0m"
 else

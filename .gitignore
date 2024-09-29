@@ -40,3 +40,4 @@ terraform/sp.credentials.json
 terraform/certbot.ini
 
 **/venv/
+terraform/r0w.online.pfx

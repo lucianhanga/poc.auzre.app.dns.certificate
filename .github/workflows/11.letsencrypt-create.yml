@@ -41,13 +41,12 @@ jobs:
       - name: Create the certbot configuration file
         run: |
             source venv/bin/activate
-            echo "dns_azure_sp_client_id = \"$AZURE_CLIENT_ID\"" > certbot.ini
-            echo "dns_azure_sp_client_secret = \"$AZURE_CLIENT_SECRET\"" >> certbot.ini
-            echo "dns_azure_subscription_id = \"$AZURE_SUBSCRIPTION_ID\"" >> certbot.ini
-            echo "dns_azure_tenant_id = \"$AZURE_TENANT_ID\"" >> certbot.ini
+            echo "dns_azure_sp_client_id = \"${{ secrets.AZURE_CLIENT_ID }}\"" > certbot.ini
+            echo "dns_azure_sp_client_secret = \"${{ secrets.AZURE_CLIENT_SECRET }}\"" >> certbot.ini
+            echo "dns_azure_subscription_id = \"${{ secrets.AZURE_SUBSCRIPTION_ID }}\"" >> certbot.ini
+            echo "dns_azure_tenant_id = \"${{ secrets.AZURE_TENANT_ID }}\"" >> certbot.ini
             echo "dns_azure_environment = \"AzurePublicCloud\"" >> certbot.ini
-            echo "dns_azure_zone1 = \"$AZURE_DNS_ZONE:/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$AZURE_RESOURCE_GROUP\"" >> certbot.ini
-
+            echo "dns_azure_zone1 = \"${{ secrets.AZURE_DNS_ZONE }}:/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP }}\"" >> certbot.ini
       # step 5 Show the content of the certbot configuration file
       - name: Show the content of the certbot configuration file
         run: |

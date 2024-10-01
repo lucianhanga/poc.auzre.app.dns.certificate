@@ -214,3 +214,54 @@ jobs:
         run: |
           ls -l | grep pfx
 
+      # upload the certificate files (all 5) one by one to the keyvault
+      - name: Upload the cert.pem to the keyvault
+        run: |
+          echo "Uploading cert.pem to the keyvault"
+          certname="certpem"
+          secret=$(base64 cert.pem)
+          az keyvault secret set \
+            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --name $certname \
+            --value $secret
+        
+      - name: Upload the chain.pem to the keyvault
+        run: |
+          echo "Uploading chain.pem to the keyvault"
+          certname="chainpem"
+          secret=$(base64 chain.pem)
+          az keyvault secret set \
+            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the fullchain.pem to the keyvault
+        run: |
+          echo "Uploading fullchain.pem to the keyvault"
+          certname="fullchainpem"
+          secret=$(base64 fullchain.pem)
+          az keyvault secret set \
+            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the privkey.pem to the keyvault
+        run: |
+          echo "Uploading privkey.pem to the keyvault"
+          certname="privkeypem"
+          secret=$(base64 privkey.pem)
+          az keyvault secret set \
+            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the cert.pfx to the keyvault
+        run: |
+          echo "Uploading cert.pfx to the keyvault"
+          certname="certpfx"
+          secret=$(base64 cert.pfx)
+          az keyvault secret set \
+            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --name $certname \
+            --value $secret
+    

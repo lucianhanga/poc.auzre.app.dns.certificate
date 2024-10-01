@@ -224,6 +224,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Show information about the logged in user
+        run: |
+          az account show
+
       # upload the certificate files (all 5) one by one to the keyvault
       - name: Upload the cert.pem to the keyvault
         run: |

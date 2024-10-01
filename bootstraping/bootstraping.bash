@@ -47,6 +47,9 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+# create a project suffix with a random number
+PROJECT_SUFFIX=$RANDOM$RANDOM
+
 # check if the project name is provided
 if [ -z "$PROJECT" ]; then
     # with red color x mark and the message
@@ -251,6 +254,7 @@ echo "object_id=\"$SP_OBJECT_ID\"" >> ../terraform/terraform.tfvars
 echo "location=\"$LOCATION\"" >> ../terraform/terraform.tfvars
 echo "resource_group_name=\"$RESOURCE_GROUP\"" >> ../terraform/terraform.tfvars
 echo "project_name=\"$PROJECT\"" >> ../terraform/terraform.tfvars
+echo "project_suffix=\"$PROJECT_SUFFIX\"" >> ../terraform/terraform.tfvars
 
 # update the repo actions secrets with the values
 gh secret set AZURE_CLIENT_ID -b "$AZURE_CLIENT_ID"
@@ -272,6 +276,7 @@ gh secret set PAT_TOKEN -b "$GITHUB_TOKEN"
 gh variable set AZURE_LOCATION -b "$LOCATION"
 gh variable set AZURE_GROUP_NAME -b "$RESOURCE_GROUP"
 gh variable set PROJECT_NAME -b "$PROJECT"
+gh variable set PROJECT_SUFFIX -b "$PROJECT_SUFFIX"
 
 # print that the secrets and variables are updated with green color
 echo -e "\e[32m\xE2\x9C\x94 GitHub secrets and variables updated successfully\e[0m"

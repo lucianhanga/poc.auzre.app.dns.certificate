@@ -78,7 +78,8 @@ jobs:
       - name: Show the certificate
         run: |
           # source venv/bin/activate
-            ls -l ./live/${{ secrets.AZURE_DOMAIN_NAME }}
+          #  ls -l ./live/${{ secrets.AZURE_DOMAIN_NAME }}
+          ls -lR ./
 
       # step 9 Upload the artifacts for the next job
 

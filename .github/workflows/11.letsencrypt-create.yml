@@ -116,3 +116,57 @@ jobs:
           overwrite: true
           compression-level: 0  # no compression
 
+  # genrate some fake certifactes and add it to the artifacts
+  # for simmulating the previous job, for development purpose 
+
+  generate-fake-certificate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate fake certificate
+        run: |
+          mkdir -p ./live/${{ secrets.AZURE_DOMAIN_NAME }}
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+
+      # step 9 Upload the artifacts for the next job
+
+      - name: Upload the cert.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: cert.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the chain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: chain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the fullchain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullchain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the privkey.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: privkey.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+          

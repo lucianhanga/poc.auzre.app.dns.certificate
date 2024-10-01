@@ -173,7 +173,8 @@ jobs:
   upload-to-keyvault:
     runs-on: ubuntu-latest
     # depend on the previous jobs
-    needs: [generate-certificate, generate-fake-certificate]
+    # needs:  generate-certificate
+    needs:  generate-fake-certificate
 
     steps:
       - name: Download the cert.pem

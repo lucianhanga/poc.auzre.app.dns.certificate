@@ -175,6 +175,11 @@ jobs:
     # depend on the previous jobs
     # needs:  generate-certificate
     needs:  generate-fake-certificate
+    # create an environment variable which is the name of the keyvault
+    # and is constructed like this: "kv-<project-name>-<project-suffix>"
+    # project-name and project-suffix are the repository variables
+    env:
+      KEYVAULT_NAME: kv-${{ vars.PROJECT_NAME }}${{ vars.PROJECT_SUFFIX }}
 
     steps:
       - name: Download the cert.pem
@@ -221,7 +226,7 @@ jobs:
           certname="certpem"
           secret=$(base64 cert.pem)
           az keyvault secret set \
-            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --vault-name $KEYVAULT_NAME \
             --name $certname \
             --value $secret
         
@@ -231,7 +236,7 @@ jobs:
           certname="chainpem"
           secret=$(base64 chain.pem)
           az keyvault secret set \
-            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --vault-name $KEYVAULT_NAME \
             --name $certname \
             --value $secret
 
@@ -241,7 +246,7 @@ jobs:
           certname="fullchainpem"
           secret=$(base64 fullchain.pem)
           az keyvault secret set \
-            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --vault-name $KEYVAULT_NAME \
             --name $certname \
             --value $secret
 
@@ -251,7 +256,7 @@ jobs:
           certname="privkeypem"
           secret=$(base64 privkey.pem)
           az keyvault secret set \
-            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --vault-name $KEYVAULT_NAME \
             --name $certname \
             --value $secret
 
@@ -261,7 +266,7 @@ jobs:
           certname="certpfx"
           secret=$(base64 cert.pfx)
           az keyvault secret set \
-            --vault-name ${{ secrets.KEYVAULT_NAME }} \
+            --vault-name $KEYVAULT_NAME \
             --name $certname \
             --value $secret
     

@@ -41,3 +41,8 @@ terraform/certbot.ini
 
 **/venv/
 terraform/r0w.online.pfx
+local.actions/cert.pem
+local.actions/cert.pfx
+local.actions/chain.pem
+local.actions/fullchain.pem
+local.actions/privkey.pem

@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   generate-certificate:
     runs-on: ubuntu-latest
 
@@ -46,11 +47,65 @@ jobs:
             echo "dns_azure_subscription_id = \"${{ secrets.AZURE_SUBSCRIPTION_ID }}\"" >> certbot.ini
             echo "dns_azure_tenant_id = \"${{ secrets.AZURE_TENANT_ID }}\"" >> certbot.ini
             echo "dns_azure_environment = \"AzurePublicCloud\"" >> certbot.ini
-            echo "dns_azure_zone1 = \"${{ secrets.AZURE_DNS_ZONE }}:/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP }}\"" >> certbot.ini
+            echo "dns_azure_zone1 = \"${{ secrets.AZURE_DOMAIN_NAME }}:/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP }}\"" >> certbot.ini
+
       # step 5 Show the content of the certbot configuration file
       - name: Show the content of the certbot configuration file
         run: |
           source venv/bin/activate
           cat certbot.ini
 
+      # step 6 Create the wildcard certificate
+      - name: Create the wildcard certificate
+        run: |
+          source venv/bin/activate
+          sudo certbot certonly \
+            --authenticator dns-azure \
+            --preferred-challenges dns-01 \
+            --dns-azure-config certbot.ini \
+            --non-interactive \
+            --agree-tos \
+            -d "${{ secrets.AZURE_DOMAIN_NAME }}" \
+            -d "*.${{ secrets.AZURE_DOMAIN_NAME }}"
+
+      # step 8 Show the certificate
+      - name: Show the certificate
+        run: |
+          source venv/bin/activate
+          sudo ls -l /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}
+
+      # step 9 Upload the artifacts for the next job
+
+      - name: Upload the cert.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: cert.pem
+          path: /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the chain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: chain.pem
+          path: /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the fullchain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullchain.pem
+          path: /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the privkey.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: privkey.pem
+          path: /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
 

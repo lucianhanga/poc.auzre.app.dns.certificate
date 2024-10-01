@@ -1,4 +1,4 @@
-name: 11 - Let's Encrypt - Create Certificate
+name: 11 - Let's Encrypt - Create Certificate.
 
 # Controls when the workflow will run
 on:
@@ -20,11 +20,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # step 2 Install Certbot
+      # step 2 Install Certbot and Certbot Azure plugin
       - name: Install Certbot
         run: |
-          sudo apt-get update
-          sudo apt-get upgrade -y
+          # sudo apt-get update
+          # sudo apt-get upgrade -y
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip

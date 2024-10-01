@@ -46,7 +46,7 @@ jobs:
             echo "dns_azure_subscription_id = \"$AZURE_SUBSCRIPTION_ID\"" >> certbot.ini
             echo "dns_azure_tenant_id = \"$AZURE_TENANT_ID\"" >> certbot.ini
             echo "dns_azure_environment = \"AzurePublicCloud\"" >> certbot.ini
-            echo "dns_azure_zone1 = "$AZURE_DNS_ZONE:/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$AZURE_RESOURCE_GROUP"
+            echo "dns_azure_zone1 = \"$AZURE_DNS_ZONE:/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$AZURE_RESOURCE_GROUP\"" >> certbot.ini
 
       # step 5 Show the content of the certbot configuration file
       - name: Show the content of the certbot configuration file

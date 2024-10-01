@@ -182,6 +182,11 @@ jobs:
       KEYVAULT_NAME: kv-${{ vars.PROJECT_NAME }}${{ vars.PROJECT_SUFFIX }}
 
     steps:
+
+      - name: Enable debug logging
+        run: |
+          echo "ACTION_RUNNER_DEBUG=true" >> $GITHUB_ENV
+      
       - name: Download the cert.pem
         uses: actions/download-artifact@v4
         with:

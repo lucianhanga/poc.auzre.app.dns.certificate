@@ -8,6 +8,7 @@ on:
 jobs:
 
   generate-certificate:
+    if : false # disable the job
     runs-on: ubuntu-latest
 
     steps:

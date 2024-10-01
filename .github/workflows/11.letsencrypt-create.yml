@@ -61,7 +61,7 @@ jobs:
         run: |
           # source venv/bin/activate
           certbot certonly \
-            --dry-run \
+            # --dry-run \
             --config-dir ./ \
             --work-dir ./ \
             --logs-dir ./ \

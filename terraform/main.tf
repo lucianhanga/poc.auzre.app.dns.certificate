@@ -26,7 +26,7 @@ provider "azurerm" {
     # manualy purge it
     /*
       az keyvault purge \
-          --name kv-docbuletine7 \
+          --name <keyvalut-name> \
           --location westeurope
     */
     key_vault {
@@ -34,5 +34,5 @@ provider "azurerm" {
       recover_soft_deleted_key_vaults = true # This is required to recover the key vault
     }    
   }
-#  subscription_id = var.subscription_id
+  subscription_id = var.subscription_id
 }

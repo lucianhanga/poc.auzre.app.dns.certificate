@@ -59,7 +59,7 @@ jobs:
       - name: Create the wildcard certificate
         run: |
           # source venv/bin/activate
-          sudo certbot certonly \
+          certbot certonly \
             --authenticator dns-azure \
             --preferred-challenges dns-01 \
             --dns-azure-config certbot.ini \
@@ -72,7 +72,7 @@ jobs:
       - name: Show the certificate
         run: |
           # source venv/bin/activate
-          sudo ls -l /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}
+          ls -l /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}
           # change the permissions of the certificate files
           # sudo chmod 644 /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
 

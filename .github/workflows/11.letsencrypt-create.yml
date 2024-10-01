@@ -26,22 +26,22 @@ jobs:
         run: |
           # sudo apt-get update
           # sudo apt-get upgrade -y
-          python3 -m venv venv
-          source venv/bin/activate
+          # python3 -m venv venv
+          # source venv/bin/activate
           pip install --upgrade pip
           pip install certbot certbot-dns-azure
 
       # step 3 Verify the certbot installation
       - name: Verify the certbot installation
         run: |
-          source venv/bin/activate
+          # source venv/bin/activate
           certbot --version
           certbot plugins
 
       # step 4 Create the certbot configuration file
       - name: Create the certbot configuration file
         run: |
-            source venv/bin/activate
+            # source venv/bin/activate
             echo "dns_azure_sp_client_id = \"${{ secrets.AZURE_CLIENT_ID }}\"" > certbot.ini
             echo "dns_azure_sp_client_secret = \"${{ secrets.AZURE_CLIENT_SECRET }}\"" >> certbot.ini
             echo "dns_azure_subscription_id = \"${{ secrets.AZURE_SUBSCRIPTION_ID }}\"" >> certbot.ini
@@ -52,13 +52,13 @@ jobs:
       # step 5 Show the content of the certbot configuration file
       - name: Show the content of the certbot configuration file
         run: |
-          source venv/bin/activate
+          # source venv/bin/activate
           cat certbot.ini
 
       # step 6 Create the wildcard certificate
       - name: Create the wildcard certificate
         run: |
-          source venv/bin/activate
+          # source venv/bin/activate
           sudo certbot certonly \
             --authenticator dns-azure \
             --preferred-challenges dns-01 \
@@ -71,8 +71,10 @@ jobs:
       # step 8 Show the certificate
       - name: Show the certificate
         run: |
-          source venv/bin/activate
+          # source venv/bin/activate
           sudo ls -l /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}
+          # change the permissions of the certificate files
+          # sudo chmod 644 /etc/letsencrypt/live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
 
       # step 9 Upload the artifacts for the next job
 

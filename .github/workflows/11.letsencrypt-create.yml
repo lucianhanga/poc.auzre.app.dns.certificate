@@ -219,6 +219,11 @@ jobs:
         run: |
           ls -l | grep pfx
 
+      - name: Login to azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       # upload the certificate files (all 5) one by one to the keyvault
       - name: Upload the cert.pem to the keyvault
         run: |

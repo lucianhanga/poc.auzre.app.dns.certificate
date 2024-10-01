@@ -193,7 +193,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: privkey.pem
+
       - name: Prepare the pkx file
+        if: false # disable this step
         run: |
           openssl pkcs12 \
             -export \
@@ -202,6 +204,11 @@ jobs:
             -in fullchain.pem \
             -certfile chain.pem \
             -passout pass:${{ secrets.CERT_PASSWORD }}
+
+      - name: Fake the pkx file
+        run: |
+          echo "-----BEGIN PKCS12-----" > cert.pfx
+          echo "-----
 
       - name: Show the file in the folder
         run: |

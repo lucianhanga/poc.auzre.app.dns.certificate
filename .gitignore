@@ -36,3 +36,8 @@ override.tf.json
 .terraformrc
 terraform.rc
 bootstraping/.env
+terraform/sp.credentials.json
+terraform/certbot.ini
+
+**/venv/
+terraform/r0w.online.pfx

@@ -47,8 +47,6 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-# create a project suffix with a random number
-PROJECT_SUFFIX=$RANDOM$RANDOM
 
 # check if the project name is provided
 if [ -z "$PROJECT" ]; then
@@ -179,7 +177,8 @@ if [ "$SP_EXISTS" -gt 0 ]; then
     if [ "$REGENERATE_SECRET" == "true" ]; then
         # generate a new secret for the service principal and save the values in the variables
         SP_JSON=$(az ad sp credential reset --id $(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].appId" -o tsv)  -o json 2>/dev/null)
-        echo $SP_JSON
+        # print the json nicely
+        echo $SP_JSON | jq .
         # echo the values of the variables  
         if [ $? -eq 0 ]; then
             # with green color checked mark and the message
@@ -200,7 +199,7 @@ else
     # create the service principal
     SP_JSON=$(az ad sp create-for-rbac --name $SERVICE_PRINCIPAL -o json)
     # echo the values of the variables
-    echo $SP_JSON
+    echo $SP_JSON | jq .
     if [ $? -eq 0 ]; then
         # with green color checked mark and the message
         echo -e "\e[32m\xE2\x9C\x94 Service principal created successfully\e[0m"
@@ -240,6 +239,20 @@ fi
 # get the ObjectId of the service principal
 SP_OBJECT_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL --query "[0].id" -o tsv)
 
+# if the terraform.tfvars file exists, don't generate the suffix, but get it from the file
+if [ -f ../terraform/terraform.tfvars ]; then
+    # get the project suffix from the terraform.tfvars file
+    echo "terraform.tfvars file found"
+    echo "Getting the project suffix from the file"
+    PROJECT_SUFFIX=$(grep project_suffix ../terraform/terraform.tfvars | cut -d'=' -f2 | tr -d '" ')
+else
+    # generate a random suffix for the project
+    echo "terraform.tfvars file not found"
+    echo "Generating a random project suffix"
+    PROJECT_SUFFIX=$RANDOM$RANDOM
+fi
+
+
 # extract the values from the json and save them in the variables
 AZURE_CLIENT_ID=$(echo $SP_JSON | jq -r .appId)
 AZURE_CLIENT_SECRET=$(echo $SP_JSON | jq -r .password)
@@ -256,6 +269,17 @@ echo "resource_group_name=\"$RESOURCE_GROUP\"" >> ../terraform/terraform.tfvars
 echo "project_name=\"$PROJECT\"" >> ../terraform/terraform.tfvars
 echo "project_suffix=\"$PROJECT_SUFFIX\"" >> ../terraform/terraform.tfvars
 
+# print the variables with normal color and values with green color
+echo -e "client_id=\033[0;32m$AZURE_CLIENT_ID\033[0m"
+echo -e "client_secret=\033[0;32m$AZURE_CLIENT_SECRET\033[0m"
+echo -e "tenant_id=\033[0;32m$AZURE_TENANT_ID\033[0m"
+echo -e "subscription_id=\033[0;32m$AZURE_SUBSCRIPTION_ID\033[0m"
+echo -e "object_id=\033[0;32m$SP_OBJECT_ID\033[0m"
+echo -e "location=\033[0;32m$LOCATION\033[0m"
+echo -e "resource_group_name=\033[0;32m$RESOURCE_GROUP\033[0m"
+echo -e "project_name=\033[0;32m$PROJECT\033[0m"
+echo -e "project_suffix=\033[0;32m$PROJECT_SUFFIX\033[0m"
+
 # update the repo actions secrets with the values
 gh secret set AZURE_CLIENT_ID -b "$AZURE_CLIENT_ID"
 gh secret set AZURE_CLIENT_SECRET -b "$AZURE_CLIENT_SECRET"
@@ -263,12 +287,16 @@ gh secret set AZURE_TENANT_ID -b "$AZURE_TENANT_ID"
 gh secret set AZURE_SUBSCRIPTION_ID -b "$AZURE_SUBSCRIPTION_ID"
 gh secret set AZURE_OBJECT_ID -b "$SP_OBJECT_ID"
 
-gh secret set AZURE_CREDENTIALS -b "$(jq -n \
+# create a string with the azure credentials and save it in the AZURE_CREDENTIALS secret
+AZURE_CREDENTIALS=$(jq -n \
   --arg clientId "$AZURE_CLIENT_ID" \
   --arg clientSecret "$AZURE_CLIENT_SECRET" \
   --arg subscriptionId "$AZURE_SUBSCRIPTION_ID" \
   --arg tenantId "$AZURE_TENANT_ID" \
-'{"clientId": "$clientId", "clientSecret": "$clientSecret", "subscriptionId": "$subscriptionId", "tenantId": "$tenantId"}')"
+    '{clientId: $clientId, clientSecret: $clientSecret, subscriptionId: $subscriptionId, tenantId: $tenantId}')
+
+gh secret set AZURE_CREDENTIALS -b "$AZURE_CREDENTIALS"
+echo -e "AZURE_CREDENTIALS=\033[0;32m$AZURE_CREDENTIALS\033[0m"
 
 gh secret set PAT_TOKEN -b "$GITHUB_TOKEN"
 

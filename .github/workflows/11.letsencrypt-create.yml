@@ -33,12 +33,14 @@ jobs:
       # step 3 Verify the certbot installation
       - name: Verify the certbot installation
         run: |
+          source venv/bin/activate
           certbot --version
           certbot plugins
 
       # step 4 Create the certbot configuration file
       - name: Create the certbot configuration file
         run: |
+            source venv/bin/activate
             echo "dns_azure_sp_client_id = \"$AZURE_CLIENT_ID\"" > certbot.ini
             echo "dns_azure_sp_client_secret = \"$AZURE_CLIENT_SECRET\"" >> certbot.ini
             echo "dns_azure_subscription_id = \"$AZURE_SUBSCRIPTION_ID\"" >> certbot.ini
@@ -49,6 +51,7 @@ jobs:
       # step 5 Show the content of the certbot configuration file
       - name: Show the content of the certbot configuration file
         run: |
+          source venv/bin/activate
           cat certbot.ini
 
 

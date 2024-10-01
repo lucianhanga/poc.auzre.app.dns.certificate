@@ -208,7 +208,7 @@ jobs:
       - name: Fake the pkx file
         run: |
           echo "-----BEGIN PKCS12-----" > cert.pfx
-          echo "-----
+          echo "-----END PKCS12-----" >> cert.pfx
 
       - name: Show the file in the folder
         run: |

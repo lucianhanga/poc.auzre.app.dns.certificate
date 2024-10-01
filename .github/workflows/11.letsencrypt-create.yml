@@ -69,6 +69,7 @@ jobs:
             --dns-azure-config certbot.ini \
             --non-interactive \
             --agree-tos \
+            --email "${{ secrets.AZURE_EMAIL }}" \
             -d "${{ secrets.AZURE_DOMAIN_NAME }}" \
             -d "*.${{ secrets.AZURE_DOMAIN_NAME }}"
 

@@ -242,37 +242,36 @@ AZURE_CLIENT_ID=$(echo $SP_JSON | jq -r .appId)
 AZURE_CLIENT_SECRET=$(echo $SP_JSON | jq -r .password)
 AZURE_TENANT_ID=$(echo $SP_JSON | jq -r .tenant)
 AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
 # save the values in the terraform.tfvars file in the ../terraform folder
-echo "client_id=$AZURE_CLIENT_ID" > ../terraform/terraform.tfvars
-echo "client_secret=$AZURE_CLIENT_SECRET" >> ../terraform/terraform.tfvars
-echo "tenant_id=$AZURE_TENANT_ID" >> ../terraform/terraform.tfvars
-echo "subscription_id=$AZURE_SUBSCRIPTION_ID" >> ../terraform/terraform.tfvars
-echo "object_id=$SP_OBJECT_ID" >> ../terraform/terraform.tfvars
-echo "location=$LOCATION" >> ../terraform/terraform.tfvars
-echo "resource_group_name=$RESOURCE_GROUP" >> ../terraform/terraform.tfvars
-echo "project_name=$PROJECT" >> ../terraform/terraform.tfvars
+echo "client_id=\"$AZURE_CLIENT_ID\"" > ../terraform/terraform.tfvars
+echo "client_secret=\"$AZURE_CLIENT_SECRET\"" >> ../terraform/terraform.tfvars
+echo "tenant_id=\"$AZURE_TENANT_ID\"" >> ../terraform/terraform.tfvars
+echo "subscription_id=\"$AZURE_SUBSCRIPTION_ID\"" >> ../terraform/terraform.tfvars
+echo "object_id=\"$SP_OBJECT_ID\"" >> ../terraform/terraform.tfvars
+echo "location=\"$LOCATION\"" >> ../terraform/terraform.tfvars
+echo "resource_group_name=\"$RESOURCE_GROUP\"" >> ../terraform/terraform.tfvars
+echo "project_name=\"$PROJECT\"" >> ../terraform/terraform.tfvars
 
 # update the repo actions secrets with the values
-gh secret set AZURE_CLIENT_ID -b $AZURE_CLIENT_ID
-gh secret set AZURE_CLIENT_SECRET -b $AZURE_CLIENT_SECRET
-gh secret set AZURE_TENANT_ID -b $AZURE_TENANT_ID
-gh secret set AZURE_SUBSCRIPTION_ID -b $AZURE_SUBSCRIPTION_ID
-gh secret set AZURE_OBJECT_ID -b $SP_OBJECT_ID
+gh secret set AZURE_CLIENT_ID -b "$AZURE_CLIENT_ID"
+gh secret set AZURE_CLIENT_SECRET -b "$AZURE_CLIENT_SECRET"
+gh secret set AZURE_TENANT_ID -b "$AZURE_TENANT_ID"
+gh secret set AZURE_SUBSCRIPTION_ID -b "$AZURE_SUBSCRIPTION_ID"
+gh secret set AZURE_OBJECT_ID -b "$SP_OBJECT_ID"
 
 gh secret set AZURE_CREDENTIALS -b "$(jq -n \
   --arg clientId "$AZURE_CLIENT_ID" \
   --arg clientSecret "$AZURE_CLIENT_SECRET" \
   --arg subscriptionId "$AZURE_SUBSCRIPTION_ID" \
   --arg tenantId "$AZURE_TENANT_ID" \
-  '{clientId: $clientId, clientSecret: $clientSecret, subscriptionId: $subscriptionId, tenantId: $tenantId}')"
+'{"clientId": "$clientId", "clientSecret": "$clientSecret", "subscriptionId": "$subscriptionId", "tenantId": "$tenantId"}')"
 
-gh secret set PAT_TOKEN -b $GITHUB_TOKEN
+gh secret set PAT_TOKEN -b "$GITHUB_TOKEN"
 
 # update the repo variables with the values
-gh variable set AZURE_LOCATION -b $LOCATION
-gh variable set AZURE_GROUP_NAME -b $RESOURCE_GROUP
-gh variable set PROJECT_NAME -b $PROJECT
+gh variable set AZURE_LOCATION -b "$LOCATION"
+gh variable set AZURE_GROUP_NAME -b "$RESOURCE_GROUP"
+gh variable set PROJECT_NAME -b "$PROJECT"
 
 # print that the secrets and variables are updated with green color
 echo -e "\e[32m\xE2\x9C\x94 GitHub secrets and variables updated successfully\e[0m"

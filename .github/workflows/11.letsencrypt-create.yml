@@ -169,4 +169,38 @@ jobs:
           retention-days: 1
           overwrite: true
           compression-level: 0  # no compression
-          
+
+  upload-to-keyvault:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download the cert.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: cert.pem
+      - name: Download the chain.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: chain.pem
+      - name: Download the fullchain.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: fullchain.pem
+      - name: Download the privkey.pem  
+        uses: actions/download-artifact@v4
+        with:
+          name: privkey.pem
+      - name: Prepare the pkx file
+        run: |
+          openssl pkcs12 \
+            -export \
+            -out cert.pfx \
+            -inkey privkey.pem \
+            -in fullchain.pem \
+            -certfile chain.pem \
+            -passout pass:${{ secrets.CERT_PASSWORD }}
+
+      - name: Show the file in the folder
+        run: |
+          ls -l | grep pfx
+

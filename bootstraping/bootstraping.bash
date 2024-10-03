@@ -23,19 +23,75 @@ RESOURCE_GROUP=""
 SERVICE_PRINCIPAL=""
 REGENERATE_SECRET="false"
 
+# check if the ../terraform/terraform.tfvars file exists
+# if yes, load the values from the file
+if [ -f ../terraform/terraform.tfvars ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 terraform.tfvars file found\e[0m"
+    # get the values from the file
+    source ../terraform/terraform.tfvars
+    # print the values with green color
+    echo -e "client_id=\033[0;32m$client_id\033[0m"
+    echo -e "client_secret=\033[0;32m$client_secret\033[0m"
+    echo -e "tenant_id=\033[0;32m$tenant_id\033[0m"
+    echo -e "subscription_id=\033[0;32m$subscription_id\033[0m"
+    echo -e "object_id=\033[0;32m$object_id\033[0m"
+    echo -e "location=\033[0;32m$location\033[0m"
+    echo -e "resource_group_name=\033[0;32m$resource_group_name\033[0m"
+    echo -e "project_name=\033[0;32m$project_name\033[0m"
+    echo -e "project_suffix=\033[0;32m$project_suffix\033[0m"
+    # set the variables with the values from the file
+    LOCATION=$location
+    RESOURCE_GROUP=$resource_group_name
+    SERVICE_PRINCIPAL=$client_id
+    PROJECT=$project_name
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 terraform.tfvars file not found\e[0m"
+fi
+
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --project) PROJECT="$2"; shift ;;
-        --location) LOCATION="$2"; shift ;;
-        --group) RESOURCE_GROUP="$2"; shift ;;
-        --sp) SERVICE_PRINCIPAL="$2"; shift ;;
+        --project)
+            if [ -n "$PROJECT" ]; then
+            echo -e "\e[33m\xE2\x9A\xA0 Project parameter already set, ignoring: $2\e[0m"
+            else
+            PROJECT="$2"
+            fi
+            shift
+            ;;
+        --location)
+            if [ -n "$LOCATION" ]; then
+            echo -e "\e[33m\xE2\x9A\xA0 Location parameter already set, ignoring: $2\e[0m"
+            else
+            LOCATION="$2"
+            fi
+            shift
+            ;;
+        --group)
+            if [ -n "$RESOURCE_GROUP" ]; then
+            echo -e "\e[33m\xE2\x9A\xA0 Resource group parameter already set, ignoring: $2\e[0m"
+            else
+            RESOURCE_GROUP="$2"
+            fi
+            shift
+            ;;
+        --sp)
+            if [ -n "$SERVICE_PRINCIPAL" ]; then
+            echo -e "\e[33m\xE2\x9A\xA0 Service principal parameter already set, ignoring: $2\e[0m"
+            else
+            SERVICE_PRINCIPAL="$2"
+            fi
+            shift
+            ;;
         --regenerate-secret) REGENERATE_SECRET="true";;
         --help) usage ;;
         *) echo "Unknown parameter: $1"; usage ;;
     esac
     shift
 done
+
 
 # Generate resource group name if not provided
 if [ -z "$RESOURCE_GROUP" ]; then
@@ -71,7 +127,6 @@ else
     echo -e "\e[32m\xE2\x9C\x94 Project name: $PROJECT\e[0m"
 fi
 
-
 # check if you are logged in to GitHub using gh command
 # if not logged in, then prompt the user to login
 gh auth status > /dev/null
@@ -89,11 +144,14 @@ fi
 # and give the required permissions to the service principal
 
 # step1 check if the user is logged in
-az account show > /dev/null
+az account show > /dev/null 2>&1
 # if errr code is 1 then user is not logged in
 if [ $? -eq 1 ]; then
     # with red color strting with the x mark and the message not logged in to azure
     echo -e "\e[31m\xE2\x9C\x98 Not logged in to azure\e[0m"
+    # write a message to login to azure and give the command 
+    echo " Please login to Azure with a developer account using the following command:"
+    echo " az login"
     exit 1
 else
     # with green color -  check mark and the message logged in to azure
@@ -101,8 +159,8 @@ else
 fi
 
 # step2 check if the user has contributor access to the subscription
-az role assignment list --include-inherited --assignee $(az account show --query user.name -o tsv) --role Contributor > /dev/null
-# if errr code is 1 then user does not have contributor access
+az role assignment list --include-inherited --assignee $(az ad signed-in-user show --query id -o tsv) --role Contributor > /dev/null
+# if error code is 1 then user does not have contributor access
 if [ $? -eq 1 ]; then
     # with red color x mark and the message
     echo -e "\e[31m\xE2\x9C\x98 You do not have contributor access to the subscription\e[0m"
@@ -113,7 +171,7 @@ else
 fi
 
 # step 3 check if you have User Manager role in the subscription
-az role assignment list --include-inherited --assignee $(az account show --query user.name -o tsv) --role "User Access Administrator" > /dev/null
+az role assignment list --include-inherited --assignee $(az ad signed-in-user show --query id -o tsv) --role "User Access Administrator" > /dev/null
 # if errr code is 1 then user does not have User Access Administrator access
 if [ $? -eq 1 ]; then
     # with red color x mark and the message
@@ -184,6 +242,10 @@ fi
 echo "Creating service principal: $SERVICE_PRINCIPAL"
 # check if the service principal exists
 SP_EXISTS=$(az ad sp list --filter "displayName eq '$SERVICE_PRINCIPAL'" --query "length([])" -o tsv)
+# if this does not exist then check if the service principal as a client id exists
+if [ "$SP_EXISTS" -eq 0 ]; then
+    SP_EXISTS=$(az ad sp list --filter "appId eq '$SERVICE_PRINCIPAL'" --query "length([])" -o tsv)
+fi
 if [ "$SP_EXISTS" -gt 0 ]; then
     # with yellow color and a yellow triangle and the message
     echo -e "\e[33m\xE2\x9A\xA0 Service principal already exists\e[0m"

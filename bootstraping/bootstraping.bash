@@ -1,52 +1,65 @@
 #!/bin/bash
-
-
 # Function to show usage
 usage() {
-  echo "Usage: $0 --project <name> --location <location> --group <resource-group-name> --sp <service-principal-name> --regenerate-secret"
-  exit 1
+    echo "Usage: $0 --project <name> [--location <location>] [--group <resource-group-name>] --sp <service-principal-name> [--regenerate-secret]"
+    echo "Options:"
+    echo "  --project            Name of the project. This is a mandatory parameter."
+    echo "  --location           Azure location where the resources will be created. Default is 'westeurope'."
+    echo "  --group              Name of the resource group. If not provided, it will be generated from the project name with prefix 'rg-'."
+    echo "  --sp                 Name of the service principal. This is a mandatory parameter."
+    echo "  --regenerate-secret  Regenerate the service principal secret. This is an optional parameter."
+    echo "  --help               Show this help message."
+    echo
+    echo "Usage samples:"
+    echo "  $0 --project myproject --sp myserviceprincipal"
+    echo "  $0 --project myproject --location eastus --sp myserviceprincipal"
+    echo "  $0 --project myproject --location westus --group myresourcegroup --sp myserviceprincipal --regenerate-secret"
+    exit 1
 }
 
-
-# check if the ".env" file exists
-if [ -f .env ]; then
-  # with green color checked mark and the message
-  echo -e "\e[32m\xE2\x9C\x94 .env file found\e[0m"
-  # warn that now the github token will changed and has only read access on the source code
-  echo -e "\e[33m\xE2\x9A\xA0 GitHub token will be changed to read-only access\e[0m"
-  # old github token
-  echo -e "old GITHUB_TOKEN=\033[0;31m$GITHUB_TOKEN\033[0m"
-  # source the .env file  
-  source .env
-  echo -e "new GITHUB_TOKEN=\033[0;32m$GITHUB_TOKEN\033[0m"
-else
-  # with red color x mark and the message
-  echo -e "\e[31m\xE2\x9C\x98 .env file not found\e[0m"
-  # finish the script
-  echo "Exiting..."
-  exit 0
-fi
-
-
 # Initialize variables
-LOCATION=""
+LOCATION="westeurope"
 RESOURCE_GROUP=""
 SERVICE_PRINCIPAL=""
 REGENERATE_SECRET="false"
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    --project) PROJECT="$2"; shift ;;
-    --location) LOCATION="$2"; shift ;;
-    --group) RESOURCE_GROUP="$2"; shift ;;
-    --sp) SERVICE_PRINCIPAL="$2"; shift ;;
-    --regenerate-secret) REGENERATE_SECRET="true";;
-    *) echo "Unknown parameter: $1"; usage ;;
-  esac
-  shift
+    case $1 in
+        --project) PROJECT="$2"; shift ;;
+        --location) LOCATION="$2"; shift ;;
+        --group) RESOURCE_GROUP="$2"; shift ;;
+        --sp) SERVICE_PRINCIPAL="$2"; shift ;;
+        --regenerate-secret) REGENERATE_SECRET="true";;
+        --help) usage ;;
+        *) echo "Unknown parameter: $1"; usage ;;
+    esac
+    shift
 done
 
+# Generate resource group name if not provided
+if [ -z "$RESOURCE_GROUP" ]; then
+    RESOURCE_GROUP="rg-$PROJECT"
+fi
+
+# check if the ".env" file exists
+if [ -f .env ]; then
+    # with green color checked mark and the message
+    echo -e "\e[32m\xE2\x9C\x94 .env file found\e[0m"
+    # warn that now the github token will changed and has only read access on the source code
+    echo -e "\e[33m\xE2\x9A\xA0 GitHub token will be changed to read-only access\e[0m"
+    # old github token
+    echo -e "old GITHUB_TOKEN=\033[0;31m$GITHUB_TOKEN\033[0m"
+    # source the .env file  
+    source .env
+    echo -e "new GITHUB_TOKEN=\033[0;32m$GITHUB_TOKEN\033[0m"
+else
+    # with red color x mark and the message
+    echo -e "\e[31m\xE2\x9C\x98 .env file not found\e[0m"
+    # finish the script
+    echo "Exiting..."
+    exit 0
+fi
 
 # check if the project name is provided
 if [ -z "$PROJECT" ]; then

@@ -31,7 +31,7 @@ fi
 # and give the required permissions to the service principal
 
 # step1 check if the user is logged in
-az account show > /dev/null
+az account show > /dev/null 2>&1
 # if errr code is 1 then user is not logged in
 if [ $? -eq 1 ]; then
     # with red color strting with the x mark and the message not logged in to azure
@@ -43,8 +43,8 @@ else
 fi
 
 # step2 check if the user has contributor access to the subscription
-az role assignment list --include-inherited --assignee $(az account show --query user.name -o tsv) --role Contributor > /dev/null
-# if errr code is 1 then user does not have contributor access
+az role assignment list --include-inherited --assignee $(az ad signed-in-user show --query id -o tsv) --role Contributor > /dev/null
+# if error code is 1 then user does not have contributor access
 if [ $? -eq 1 ]; then
     # with red color x mark and the message
     echo -e "\e[31m\xE2\x9C\x98 You do not have contributor access to the subscription\e[0m"
@@ -55,7 +55,7 @@ else
 fi
 
 # step 3 check if you have User Manager role in the subscription
-az role assignment list --include-inherited --assignee $(az account show --query user.name -o tsv) --role "User Access Administrator" > /dev/null
+az role assignment list --include-inherited --assignee $(az ad signed-in-user show --query id -o tsv) --role "User Access Administrator" > /dev/null
 # if errr code is 1 then user does not have User Access Administrator access
 if [ $? -eq 1 ]; then
     # with red color x mark and the message

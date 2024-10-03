@@ -427,14 +427,3 @@ echo container_name       = \"tfstate\" >> ../terraform/backend.tfvars
 # save it in the github variables
 gh variable set TERRAFORM_STORAGE_ACCOUNT_NAME -b $STORAGE_ACCOUNT_NAME
 gh variable set TERRAFORM_CONTAINER_NAME -b "tfstate"
-
-
-
-
-
-
-
-
-
-
-

@@ -1,36 +1,286 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
+name: 11 - Let's Encrypt - Create Certificate.
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
+  # manual trigger
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+
+  generate-certificate:
+    if : false # disable the job
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # step 1 Login to Azure
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # step 2 Install Certbot and Certbot Azure plugin
+      - name: Install Certbot
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          # sudo apt-get update
+          # sudo apt-get upgrade -y
+          # python3 -m venv venv
+          # source venv/bin/activate
+          sudo pip install --upgrade pip
+          sudo pip install certbot certbot-dns-azure
+
+      # step 3 Verify the certbot installation
+      - name: Verify the certbot installation
+        run: |
+          # source venv/bin/activate
+          certbot --version
+          certbot plugins
+
+      # step 4 Create the certbot configuration file
+      - name: Create the certbot configuration file
+        run: |
+            # source venv/bin/activate
+            echo "dns_azure_sp_client_id = \"${{ secrets.AZURE_CLIENT_ID }}\"" > certbot.ini
+            echo "dns_azure_sp_client_secret = \"${{ secrets.AZURE_CLIENT_SECRET }}\"" >> certbot.ini
+            echo "dns_azure_subscription_id = \"${{ secrets.AZURE_SUBSCRIPTION_ID }}\"" >> certbot.ini
+            echo "dns_azure_tenant_id = \"${{ secrets.AZURE_TENANT_ID }}\"" >> certbot.ini
+            echo "dns_azure_environment = \"AzurePublicCloud\"" >> certbot.ini
+            echo "dns_azure_zone1 = \"${{ secrets.AZURE_DOMAIN_NAME }}:/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.AZURE_GROUP_NAME }}\"" >> certbot.ini
+            chmod 600 certbot.ini
+
+      # step 5 Show the content of the certbot configuration file
+      - name: Show the content of the certbot configuration file
+        run: |
+          # source venv/bin/activate
+          cat certbot.ini
+
+      # step 6 Create the wildcard certificate
+      - name: Create the wildcard certificate
+        run: |
+          # source venv/bin/activate
+          certbot certonly \
+            --config-dir ./ \
+            --work-dir ./ \
+            --logs-dir ./ \
+            --authenticator dns-azure \
+            --preferred-challenges dns-01 \
+            --dns-azure-config certbot.ini \
+            --non-interactive \
+            --agree-tos \
+            --email "${{ secrets.AZURE_EMAIL }}" \
+            -d "${{ secrets.AZURE_DOMAIN_NAME }}" \
+            -d "*.${{ secrets.AZURE_DOMAIN_NAME }}"
+
+      # step 8 Show the certificate
+      - name: Show the certificate
+        run: |
+          # source venv/bin/activate
+          #  ls -l ./live/${{ secrets.AZURE_DOMAIN_NAME }}
+          ls -lR ./
+
+      # step 9 Upload the artifacts for the next job
+
+      - name: Upload the cert.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: cert.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the chain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: chain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the fullchain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullchain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the privkey.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: privkey.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+
+  # genrate some fake certifactes and add it to the artifacts
+  # for simmulating the previous job, for development purpose 
+
+  generate-fake-certificate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate fake certificate
+        run: |
+          mkdir -p ./live/${{ secrets.AZURE_DOMAIN_NAME }}
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          echo "-----BEGIN CERTIFICATE-----" > ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          echo "-----END CERTIFICATE-----" >> ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+
+      # step 9 Upload the artifacts for the next job
+
+      - name: Upload the cert.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: cert.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/cert.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the chain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: chain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/chain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the fullchain.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullchain.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/fullchain.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+      - name: Upload the privkey.pem
+        uses: actions/upload-artifact@v4
+        with:
+          name: privkey.pem
+          path: ./live/${{ secrets.AZURE_DOMAIN_NAME }}/privkey.pem
+          retention-days: 1
+          overwrite: true
+          compression-level: 0  # no compression
+
+  upload-to-keyvault:
+    runs-on: ubuntu-latest
+    # depend on the previous jobs
+    # needs:  generate-certificate
+    needs:  generate-fake-certificate
+    # create an environment variable which is the name of the keyvault
+    # and is constructed like this: "kv-<project-name>-<project-suffix>"
+    # project-name and project-suffix are the repository variables
+    env:
+      KEYVAULT_NAME: kv-${{ vars.PROJECT_NAME }}${{ vars.PROJECT_SUFFIX }}
+
+    steps:
+
+      - name: Enable debug logging
+        run: |
+          echo "ACTION_RUNNER_DEBUG=true" >> $GITHUB_ENV
+      
+      - name: Download the cert.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: cert.pem
+      - name: Download the chain.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: chain.pem
+      - name: Download the fullchain.pem
+        uses: actions/download-artifact@v4
+        with:
+          name: fullchain.pem
+      - name: Download the privkey.pem  
+        uses: actions/download-artifact@v4
+        with:
+          name: privkey.pem
+
+      - name: Prepare the pkx file
+        if: false # disable this step
+        run: |
+          openssl pkcs12 \
+            -export \
+            -out cert.pfx \
+            -inkey privkey.pem \
+            -in fullchain.pem \
+            -certfile chain.pem \
+            -passout pass:${{ secrets.CERT_PASSWORD }}
+
+      - name: Fake the pkx file
+        run: |
+          echo "-----BEGIN PKCS12-----" > cert.pfx
+          echo "-----END PKCS12-----" >> cert.pfx
+
+      - name: Show the file in the folder
+        run: |
+          ls -l | grep pfx
+
+      - name: Login to azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Show information about the logged in user
+        run: |
+          az account show
+
+      # upload the certificate files (all 5) one by one to the keyvault
+      - name: Upload the cert.pem to the keyvault
+        run: |
+          echo "Uploading cert.pem to the keyvault"
+          certname="certpem"
+          secret=$(base64 cert.pem)
+          az keyvault secret set \
+            --vault-name $KEYVAULT_NAME \
+            --name $certname \
+            --value $secret
+        
+      - name: Upload the chain.pem to the keyvault
+        run: |
+          echo "Uploading chain.pem to the keyvault"
+          certname="chainpem"
+          secret=$(base64 chain.pem)
+          az keyvault secret set \
+            --vault-name $KEYVAULT_NAME \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the fullchain.pem to the keyvault
+        run: |
+          echo "Uploading fullchain.pem to the keyvault"
+          certname="fullchainpem"
+          secret=$(base64 fullchain.pem)
+          az keyvault secret set \
+            --vault-name $KEYVAULT_NAME \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the privkey.pem to the keyvault
+        run: |
+          echo "Uploading privkey.pem to the keyvault"
+          certname="privkeypem"
+          secret=$(base64 privkey.pem)
+          az keyvault secret set \
+            --vault-name $KEYVAULT_NAME \
+            --name $certname \
+            --value $secret
+
+      - name: Upload the cert.pfx to the keyvault
+        run: |
+          echo "Uploading cert.pfx to the keyvault"
+          certname="certpfx"
+          secret=$(base64 cert.pfx)
+          az keyvault secret set \
+            --vault-name $KEYVAULT_NAME \
+            --name $certname \
+            --value $secret
+    

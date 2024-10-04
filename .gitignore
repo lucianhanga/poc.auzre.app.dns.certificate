@@ -46,3 +46,4 @@ local.actions/cert.pfx
 local.actions/chain.pem
 local.actions/fullchain.pem
 local.actions/privkey.pem
+terraform/.terraform.lock.hcl

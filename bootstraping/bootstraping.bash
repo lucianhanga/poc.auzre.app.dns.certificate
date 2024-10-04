@@ -293,7 +293,7 @@ fi
 
 # give the service principal contributor access to the subscription
 az role assignment create \
-    --role Contributor \
+    --role "Contributor" \
     --assignee $(az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query "[0].appId" -o tsv) \
     --scope /subscriptions/$(az account show --query id -o tsv) > /dev/null 2>&1
 if [ $? -eq 0 ]; then

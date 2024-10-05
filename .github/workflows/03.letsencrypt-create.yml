@@ -46,7 +46,6 @@ jobs:
           # Compare DNS servers
           if [ "$nslookup_output" == "$azure_dns_servers" ]; then
             echo -e "\e[32m\xE2\x9C\x94 DNS servers match\e[0m"
-            exit 1
           else
             echo -e "\e[31m\xE2\x9C\x98 DNS servers do not match\e[0m"
             exit 1

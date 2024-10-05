@@ -52,7 +52,7 @@ jobs:
           fi
 
   generate-certificate:
-    if : false # disable the job
+    # if : false # disable the job
     runs-on: ubuntu-latest
     needs: check-dns
 
@@ -162,6 +162,7 @@ jobs:
           compression-level: 0  # no compression
 
   generate-fake-certificate:
+    if : false # disable the job
     runs-on: ubuntu-latest
     needs: [ check-dns ]
     steps:
@@ -214,8 +215,8 @@ jobs:
 
   upload-to-keyvault:
     runs-on: ubuntu-latest
-    # needs:  generate-certificate
-    needs:  [ generate-fake-certificate ]
+    needs:  [ generate-certificate ]
+    # needs:  [ generate-fake-certificate ]
     env:
       KEYVAULT_NAME: kv-${{ vars.PROJECT_NAME }}${{ vars.PROJECT_SUFFIX }}
     steps:

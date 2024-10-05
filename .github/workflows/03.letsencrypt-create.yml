@@ -1,15 +1,60 @@
-name: 3. - Let's Encrypt - Create Certificate.
+name: 3. Let's Encrypt - (Re)Create Certificates
 
 # Controls when the workflow will run
 on:
   # manual trigger
   workflow_dispatch:
 
+
+env:
+  resource_group_name: ${{ vars.AZURE_GROUP_NAME }}
+  domain_name: ${{ secrets.AZURE_DOMAIN_NAME }}
+
 jobs:
 
-  generate-certificate:
-    if : false # disable the job
+  check-dns:
+    name: Check DNS servers
     runs-on: ubuntu-latest
+    needs: []
+    steps:
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Show the domain name from the environment
+        run: |
+          echo "The domain name is: $domain_name"
+
+      - name: Check DNS servers
+        run: |
+          # Fetch DNS servers using nslookup
+          echo "Fetching DNS servers for domain: $domain_name"
+          nslookup_output=$(nslookup -type=NS $domain_name 2>&1 | grep 'nameserver' | awk '{print $NF}' | sort)
+          echo "DNS servers from nslookup:"
+          echo "$nslookup_output"
+          # Fetch DNS servers from Azure DNS zone
+          echo "Fetching DNS servers for Azure DNS zone: $domain_name"
+          azure_dns_servers=$(az network dns zone show \
+            --name $domain_name \
+            --resource-group $resource_group_name \
+            --query "nameServers" \
+            -o tsv 2>&1 | sort)
+          echo "Azure DNS Servers:"
+          echo "$azure_dns_servers"
+          # Compare DNS servers
+          if [ "$nslookup_output" == "$azure_dns_servers" ]; then
+            echo -e "\e[32m\xE2\x9C\x94 DNS servers match\e[0m"
+          else
+            echo -e "\e[31m\xE2\x9C\x98 DNS servers do not match\e[0m"
+            exit 1
+          fi
+
+  generate-certificate:
+    # if : false # disable the job
+    runs-on: ubuntu-latest
+    needs: check-dns
 
     steps:
       # Checkout repository
@@ -116,12 +161,10 @@ jobs:
           overwrite: true
           compression-level: 0  # no compression
 
-  # genrate some fake certifactes and add it to the artifacts
-  # for simmulating the previous job, for development purpose 
-
   generate-fake-certificate:
+    if : false # disable the job
     runs-on: ubuntu-latest
-
+    needs: [ check-dns ]
     steps:
       - name: Generate fake certificate
         run: |
@@ -172,17 +215,11 @@ jobs:
 
   upload-to-keyvault:
     runs-on: ubuntu-latest
-    # depend on the previous jobs
-    # needs:  generate-certificate
-    needs:  generate-fake-certificate
-    # create an environment variable which is the name of the keyvault
-    # and is constructed like this: "kv-<project-name>-<project-suffix>"
-    # project-name and project-suffix are the repository variables
+    needs:  [ generate-certificate ]
+    # needs:  [ generate-fake-certificate ]
     env:
       KEYVAULT_NAME: kv-${{ vars.PROJECT_NAME }}${{ vars.PROJECT_SUFFIX }}
-
     steps:
-
       - name: Enable debug logging
         run: |
           echo "ACTION_RUNNER_DEBUG=true" >> $GITHUB_ENV
@@ -239,10 +276,10 @@ jobs:
           echo "Uploading cert.pem to the keyvault"
           certname="certpem"
           secret=$(base64 cert.pem)
-          az keyvault secret set \
+            az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
         
       - name: Upload the chain.pem to the keyvault
         run: |
@@ -252,7 +289,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the fullchain.pem to the keyvault
         run: |
@@ -262,7 +299,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the privkey.pem to the keyvault
         run: |
@@ -272,7 +309,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the cert.pfx to the keyvault
         run: |
@@ -282,5 +319,5 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
     

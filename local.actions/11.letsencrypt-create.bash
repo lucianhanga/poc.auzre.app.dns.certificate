@@ -93,6 +93,8 @@ echo -e "location=\033[0;32m$location\033[0m"
 echo -e "resource_group_name=\033[0;32m$resource_group_name\033[0m"
 echo -e "project_name=\033[0;32m$project_name\033[0m"
 echo -e "project_suffix=\033[0;32m$project_suffix\033[0m"
+echo -e "domain_name=\033[0;32m$domain_name\033[0m"
+
 
 # create the keyvault name by appending the "kv-" to the project name and suffix
 KEYVAULT_NAME="kv-$project_name$project_suffix"
@@ -146,11 +148,36 @@ echo "done"
 # list the certificates
 # ls -l
 
-# upload the certificates to the keyvault
-echo "Uploading the certificates to the keyvault"
+# # upload the certificates to the keyvault
+# echo "Uploading the certificates to the keyvault"
 
-upload_certificate "cert-pem" "cert.pem"
-upload_certificate "chain-pem" "chain.pem"
-upload_certificate "fullchain-pem" "fullchain.pem"
-upload_certificate "privkey-pem" "privkey.pem"
-upload_certificate "cert-pfx" "cert.pfx"
+# upload_certificate "cert-pem" "cert.pem"
+# upload_certificate "chain-pem" "chain.pem"
+# upload_certificate "fullchain-pem" "fullchain.pem"
+# upload_certificate "privkey-pem" "privkey.pem"
+# upload_certificate "cert-pfx" "cert.pfx"
+
+#  check if the domain is registered with the DNS provider
+
+# Use nslookup to get NS records
+echo "Fetching DNS servers for domain: $domain_name"
+nslookup_output=$(nslookup -type=NS $domain_name 2>&1 | grep 'nameserver' | awk '{print $NF}' | sort)
+echo "$nslookup_output"
+
+# get the same information from Azure DNS-zone
+echo "Fetching DNS servers for Azure DNS zone: $domain_name"
+azure_dns_servers=$(az network dns zone show \
+  --name $domain_name \
+  --resource-group $resource_group_name \
+  --query "nameServers" \
+  -o tsv 2>&1 | sort)
+echo "Azure DNS Servers:"
+echo "$azure_dns_servers"
+
+# check if the DNS servers are the same
+if [ "$nslookup_output" == "$azure_dns_servers" ]; then
+  echo -e "\e[32m\xE2\x9C\x94 DNS servers match\e[0m"
+else
+  echo -e "\e[31m\xE2\x9C\x98 DNS servers do not match\e[0m"
+  exit 1
+fi

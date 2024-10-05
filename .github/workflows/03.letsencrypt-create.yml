@@ -1,4 +1,4 @@
-name: 3. - Let's Encrypt - Create Certificate.
+name: 3. Let's Encrypt - (Re)Create Certificates
 
 # Controls when the workflow will run
 on:

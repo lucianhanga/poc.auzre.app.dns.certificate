@@ -1,0 +1,70 @@
+name: 2. Destroy Infrastructure
+
+on:
+  push:
+    # only run on the main branch to avoid running the workflow on every branch
+    # and in main branch only when code is pushed in a specific directory and this file
+    paths:
+      - 'terraform/**' # only run when code is pushed in the terraform directory
+      - '.github/workflows/02.destroy.infrastructure.yml' # only run when this file is changed
+    branches: [ "main" ]
+
+  # manual trigger
+  workflow_dispatch:
+  
+
+jobs:
+  terraform:
+    name: Terraform Provisioning
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+      # these are needed for Terraform to authenticate with Azure
+      TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+      TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_object_id: ${{ secrets.AZURE_OBJECT_ID }}
+
+      # environment variables for Terraform
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+      TF_VAR_project_name: ${{ vars.PROJECT_NAME }}
+      TF_VAR_project_suffix: ${{ vars.PROJECT_SUFFIX }}
+      TF_VAR_resource_group_name: ${{ vars.AZURE_GROUP_NAME }}
+      TF_VAR_terraform_storage_account_name: ${{ vars.TERRAFORM_STORAGE_ACCOUNT_NAME }}
+
+      TF_VAR_domain_name: ${{ secrets.AZURE_DOMAIN_NAME }}
+      TF_VAR_service_principal_name: ${{ secrets.SERVICE_PRINCIPAL_NAME }}
+
+      # these are needed for the Azure CLI to authenticate with Azure
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_OBJECT_ID: ${{ secrets.AZURE_OBJECT_ID }}
+
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v2
+
+        - name: Initialize Terraform
+          working-directory: ./terraform
+          run: |
+            terraform init \
+              -backend-config="resource_group_name=${TF_VAR_resource_group_name}" \
+              -backend-config="storage_account_name=${TF_VAR_terraform_storage_account_name}" 
+
+        - name: Validate Terraform
+          working-directory: ./terraform
+          run: terraform validate
+
+        - name: Terraform Plan
+          working-directory: ./terraform
+          run: terraform plan -destroy -out=tfplan -input=false
+
+        - name: Terraform Apply destroy
+          working-directory: ./terraform
+          run: terraform apply -input=false -auto-approve tfplan

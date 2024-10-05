@@ -276,10 +276,10 @@ jobs:
           echo "Uploading cert.pem to the keyvault"
           certname="certpem"
           secret=$(base64 cert.pem)
-          az keyvault secret set \
+            az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
         
       - name: Upload the chain.pem to the keyvault
         run: |
@@ -289,7 +289,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the fullchain.pem to the keyvault
         run: |
@@ -299,7 +299,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the privkey.pem to the keyvault
         run: |
@@ -309,7 +309,7 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
 
       - name: Upload the cert.pfx to the keyvault
         run: |
@@ -319,5 +319,5 @@ jobs:
           az keyvault secret set \
             --vault-name $KEYVAULT_NAME \
             --name $certname \
-            --value $secret
+            --value "$secret"
     

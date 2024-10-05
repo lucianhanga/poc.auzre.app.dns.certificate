@@ -54,14 +54,14 @@ jobs:
               -backend-config="resource_group_name=${TF_VAR_resource_group_name}" \
               -backend-config="storage_account_name=${TF_VAR_terraform_storage_account_name}" 
 
-#        - name: Validate Terraform
-#          working-directory: ./terraform
-#          run: terraform validate
+        - name: Validate Terraform
+          working-directory: ./terraform
+          run: terraform validate
 
-#        - name: Terraform Plan
-#          working-directory: ./terraform
-#          run: terraform plan -out=tfplan -input=false
+        - name: Terraform Plan
+          working-directory: ./terraform
+          run: terraform plan -out=tfplan -input=false
 
-#        - name: Terraform Apply
-#          working-directory: ./terraform
-#          run: terraform apply -input=false tfplan
+        - name: Terraform Apply
+          working-directory: ./terraform
+          run: terraform apply -input=false tfplan

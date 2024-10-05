@@ -25,20 +25,20 @@ jobs:
 
       - name: Show the domain name from the environment
         run: |
-          echo "The domain name is: $DOMAIN_NAME"
+          echo "The domain name is: $domain_name"
 
       - name: Check DNS servers
         run: |
           # Fetch DNS servers using nslookup
-          echo "Fetching DNS servers for domain: $DOMAIN_NAME"
-          nslookup_output=$(nslookup -type=NS $DOMAIN_NAME 2>&1 | grep 'nameserver' | awk '{print $NF}' | sort)
+          echo "Fetching DNS servers for domain: $domain_name"
+          nslookup_output=$(nslookup -type=NS $domain_name 2>&1 | grep 'nameserver' | awk '{print $NF}' | sort)
           echo "DNS servers from nslookup:"
           echo "$nslookup_output"
           # Fetch DNS servers from Azure DNS zone
-          echo "Fetching DNS servers for Azure DNS zone: $DOMAIN_NAME"
+          echo "Fetching DNS servers for Azure DNS zone: $domain_name"
           azure_dns_servers=$(az network dns zone show \
-            --name $DOMAIN_NAME \
-            --resource-group $AZURE_RESOURCE_GROUP \
+            --name $domain_name \
+            --resource-group $resource_group_name \
             --query "nameServers" \
             -o tsv 2>&1 | sort)
           echo "Azure DNS Servers:"

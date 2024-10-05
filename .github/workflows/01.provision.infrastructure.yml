@@ -44,22 +44,6 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v4
 
-        - name: Create a project Suffix
-          id: project-suffix
-          run: |
-            if [ -z "${{ vars.PROJECT_SUFFIX }}" ]; then
-              echo "PROJECT_SUFFIX is not defined, generating a random suffix."
-              project_suffix=${RANDOM}${RANDOM}
-              echo "Generated Project Suffix: $project_suffix"
-              echo "PROJECT_SUFFIX=$project_suffix" >> $GITHUB_ENV
-              echo "TF_VAR_project_suffix=$project_suffix" >> $GITHUB_ENV
-              gh variable set PROJECT_SUFFIX -b $project_suffix
-            else
-              echo "Using existing variable for PROJECT_SUFFIX."
-              echo "PROJECT_SUFFIX=${{ vars.PROJECT_SUFFIX }}" >> $GITHUB_ENV
-              echo "TF_VAR_project_suffix=${{ vars.PROJECT_SUFFIX }}" >> $GITHUB_ENV
-            fi
-      
         - name: Setup Terraform
           uses: hashicorp/setup-terraform@v2
 
@@ -69,7 +53,6 @@ jobs:
             terraform init \
               -backend-config="resource_group_name=${TF_VAR_resource_group_name}" \
               -backend-config="storage_account_name=${TF_VAR_terraform_storage_account_name}" 
-              -backend-config="container_name=${TF_VAR_terraform_container_name}"
 
 #        - name: Validate Terraform
 #          working-directory: ./terraform

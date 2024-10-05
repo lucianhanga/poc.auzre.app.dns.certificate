@@ -4,10 +4,10 @@ on:
   push:
     # only run on the main branch to avoid running the workflow on every branch
     # and in main branch only when code is pushed in a specific directory and this file
-    # paths:
-    #  - 'terraform/**' # only run when code is pushed in the terraform directory
-    #  - '.github/workflows/1.provision-azure.yml' # only run when this file is changed
-    # branches: [ "main" ]
+    paths:
+      - 'terraform/**' # only run when code is pushed in the terraform directory
+      - '.github/workflows/01.provision.infrastructure.yml' # only run when this file is changed
+    branches: [ "main" ]
 
   # manual trigger
   workflow_dispatch:

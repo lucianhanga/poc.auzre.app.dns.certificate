@@ -1,4 +1,4 @@
-name: 1. Provision Infrastructure
+name: 2. Destroy Infrastructure
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     # and in main branch only when code is pushed in a specific directory and this file
     paths:
       - 'terraform/**' # only run when code is pushed in the terraform directory
-      - '.github/workflows/01.provision.infrastructure.yml' # only run when this file is changed
+      - '.github/workflows/02.destroy.infrastructure.yml' # only run when this file is changed
     branches: [ "main" ]
 
   # manual trigger
@@ -63,8 +63,8 @@ jobs:
 
         - name: Terraform Plan
           working-directory: ./terraform
-          run: terraform plan -out=tfplan -input=false
+          run: terraform plan -destroy -out=tfplan -input=false
 
-        - name: Terraform Apply
+        - name: Terraform Apply destroy
           working-directory: ./terraform
-          run: terraform apply -input=false tfplan
+          run: terraform apply -input=false -auto-approve tfplan

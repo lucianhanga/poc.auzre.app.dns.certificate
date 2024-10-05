@@ -5,11 +5,57 @@ on:
   # manual trigger
   workflow_dispatch:
 
+
+env:
+  resource_group_name: ${{ vars.AZURE_GROUP_NAME }}
+  domain_name: ${{ secrets.AZURE_DOMAIN_NAME }}
+
 jobs:
+
+  check-dns:
+    name: Check DNS servers
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Show the domain name from the environment
+        run: |
+          echo "The domain name is: $DOMAIN_NAME"
+
+      - name: Check DNS servers
+        run: |
+          # Fetch DNS servers using nslookup
+          echo "Fetching DNS servers for domain: $DOMAIN_NAME"
+          nslookup_output=$(nslookup -type=NS $DOMAIN_NAME 2>&1 | grep 'nameserver' | awk '{print $NF}' | sort)
+          echo "DNS servers from nslookup:"
+          echo "$nslookup_output"
+          # Fetch DNS servers from Azure DNS zone
+          echo "Fetching DNS servers for Azure DNS zone: $DOMAIN_NAME"
+          azure_dns_servers=$(az network dns zone show \
+            --name $DOMAIN_NAME \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --query "nameServers" \
+            -o tsv 2>&1 | sort)
+          echo "Azure DNS Servers:"
+          echo "$azure_dns_servers"
+          # Compare DNS servers
+          if [ "$nslookup_output" == "$azure_dns_servers" ]; then
+            echo -e "\e[32m\xE2\x9C\x94 DNS servers match\e[0m"
+            exit 1
+          else
+            echo -e "\e[31m\xE2\x9C\x98 DNS servers do not match\e[0m"
+            exit 1
+          fi
 
   generate-certificate:
     if : false # disable the job
     runs-on: ubuntu-latest
+    # depends on the previous job
+    needs: check-dns
 
     steps:
       # Checkout repository
@@ -118,7 +164,6 @@ jobs:
 
   # genrate some fake certifactes and add it to the artifacts
   # for simmulating the previous job, for development purpose 
-
   generate-fake-certificate:
     runs-on: ubuntu-latest
 

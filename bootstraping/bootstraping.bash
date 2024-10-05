@@ -368,6 +368,7 @@ gh secret set AZURE_CLIENT_SECRET -b "$AZURE_CLIENT_SECRET"
 gh secret set AZURE_TENANT_ID -b "$AZURE_TENANT_ID"
 gh secret set AZURE_SUBSCRIPTION_ID -b "$AZURE_SUBSCRIPTION_ID"
 gh secret set AZURE_OBJECT_ID -b "$SP_OBJECT_ID"
+gh secret set AZURE_SERVICE_PRINCIPAL_NAME -b "$SERVICE_PRINCIPAL_NAME"
 
 # create a string with the azure credentials and save it in the AZURE_CREDENTIALS secret
 AZURE_CREDENTIALS=$(jq -n \

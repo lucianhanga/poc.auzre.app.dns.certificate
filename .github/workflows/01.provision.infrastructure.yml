@@ -33,6 +33,9 @@ jobs:
       TF_VAR_resource_group_name: ${{ vars.AZURE_GROUP_NAME }}
       TF_VAR_terraform_storage_account_name: ${{ vars.TERRAFORM_STORAGE_ACCOUNT_NAME }}
 
+      TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+      TF_VAR_service_principal_name: ${{ secrets.SERVICE_PRINCIPAL_NAME }}
+
       # these are needed for the Azure CLI to authenticate with Azure
       ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}

@@ -13,7 +13,7 @@ resource "azurerm_linux_web_app" "webapp" {
   name                = local.app_service_name
   location            = var.location
   resource_group_name = var.resource_group_name
-  service_plan_id = azurerm_service_plan.app_service_plan.id
+  service_plan_id = azurerm_service_plan.webapp_service_plan.id
   site_config {
     linux_fx_version = "PYTHON|3.11"
   }

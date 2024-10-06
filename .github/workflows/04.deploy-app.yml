@@ -45,5 +45,4 @@ jobs:
           path: |
             .
             !venv/
-        working-directory: ${{ env.APP_FOLDER }}
   

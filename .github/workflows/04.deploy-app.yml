@@ -43,6 +43,6 @@ jobs:
         with:
           name: python-app
           path: |
-            .
-            !venv/
+            ${{ env.APP_FOLDER }}/
+            !${{ env.APP_FOLDER }}/venv/
   

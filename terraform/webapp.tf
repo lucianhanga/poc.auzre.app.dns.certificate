@@ -36,6 +36,8 @@ resource "azurerm_dns_cname_record" "custom_domain_cname" {
   resource_group_name = var.resource_group_name
   ttl                 = 300
   record              = azurerm_linux_web_app.webapp.default_site_hostname  # Point to Azure Web App's default domain
+  
+  depends_on = [ azurerm_linux_web_app.webapp, azurerm_dns_zone.dns_zone ]
 }
 
 # Output the defaul webapp URL
@@ -48,6 +50,9 @@ resource "azurerm_app_custom_hostname_binding" "custom_domain_binding" {
   web_app_id = azurerm_linux_web_app.webapp.id
   hostname = azurerm_dns_cname_record.custom_domain_cname.fqdn
   custom_hostname_binding_id = azurerm_dns_cname_record.custom_domain_cname.id
+  
+  depends_on = [ azurerm_linux_web_app.webapp, azurerm_dns_cname_record.custom_domain_cname ]
+  
 }
 
 # Output the custom domain URL

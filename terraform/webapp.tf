@@ -27,3 +27,32 @@ resource "azurerm_linux_web_app" "webapp" {
         type = "SystemAssigned"
     }
 }
+
+
+# Create a CNAME record for the custom domain (optional, skip if managed externally)
+resource "azurerm_dns_cname_record" "custom_domain_cname" {
+  name                = "www"
+  zone_name           = azurerm_dns_zone.dns_zone.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 300
+  record              = azurerm_linux_web_app.webapp.default_site_hostname  # Point to Azure Web App's default domain
+}
+
+# Output the defaul webapp URL
+output "webapp_url" {
+  value = azurerm_linux_web_app.webapp.default_site_hostname
+}
+
+# associate the custom domain with the webapp
+resource "azurerm_app_custom_hostname_binding" "custom_domain_binding" {
+  web_app_id = azurerm_linux_web_app.webapp.id
+  hostname = azurerm_dns_cname_record.custom_domain_cname.fqdn
+  custom_hostname_binding_id = azurerm_dns_cname_record.custom_domain_cname.id
+}
+
+# Output the custom domain URL
+output "custom_domain_url" {
+  value = azurerm_dns_cname_record.custom_domain_cname.fqdn
+}
+
+

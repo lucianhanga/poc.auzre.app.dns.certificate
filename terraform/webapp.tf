@@ -15,7 +15,9 @@ resource "azurerm_linux_web_app" "webapp" {
   resource_group_name = var.resource_group_name
   service_plan_id = azurerm_service_plan.webapp_service_plan.id
   site_config {
-    linux_fx_version = "PYTHON|3.11"
+    application_stack {
+        python_version = "3.11"
+    }
   }
   depends_on = [ azurerm_service_plan.webapp_service_plan ]
 

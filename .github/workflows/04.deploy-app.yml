@@ -3,6 +3,7 @@ name: 4. Build and deploy Python app to Azure Web App
 env:
   AZURE_WEBAPP_NAME: "app-${{vars.PROJECT_NAME}}${{vars.PROJECT_SUFFIX}}"
   PYTHON_VERSION: '3.12'  # set this to the Python version to use
+  APP_FOLDER: 'app'  # set this to the folder containing the Python app
 
 
 on:
@@ -16,7 +17,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # change the folder to the app folder
+      - name: Change directory to app folder
+        run: cd ${{ env.APP_FOLDER }}
 
       - name: Set up Python version
         uses: actions/setup-python@v3.0.0

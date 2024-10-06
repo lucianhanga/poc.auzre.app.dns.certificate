@@ -42,17 +42,15 @@ resource "azurerm_dns_cname_record" "custom_domain_cname" {
 
 # Output the defaul webapp URL
 output "webapp_url" {
-  value = azurerm_linux_web_app.webapp.default_site_hostname
+  value = azurerm_linux_web_app.webapp.default_hostname
 }
 
 # associate the custom domain with the webapp
-resource "azurerm_app_custom_hostname_binding" "custom_domain_binding" {
-  web_app_id = azurerm_linux_web_app.webapp.id
+resource "azurerm_app_service_custom_hostname_binding" "custom_domain_binding" {
   hostname = azurerm_dns_cname_record.custom_domain_cname.fqdn
-  custom_hostname_binding_id = azurerm_dns_cname_record.custom_domain_cname.id
-  
-  depends_on = [ azurerm_linux_web_app.webapp, azurerm_dns_cname_record.custom_domain_cname ]
-  
+  app_service_name = azurerm_linux_web_app.webapp.name
+  resource_group_name = var.resource_group_name
+  depends_on = [ azurerm_dns_cname_record.custom_domain_cname ]  
 }
 
 # Output the custom domain URL

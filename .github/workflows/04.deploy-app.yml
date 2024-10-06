@@ -20,27 +20,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # change the folder to the app folder
-      - name: Change directory to app folder
-        run: cd ${{ env.APP_FOLDER }}
-
       - name: Set up Python version
+        working-directory: ${{ env.APP_FOLDER }}
         uses: actions/setup-python@v3.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: Create and start virtual environment
+        working-directory: ${{ env.APP_FOLDER }}
         run: |
           python -m venv venv
           source venv/bin/activate
 
       - name: Install dependencies
+        working-directory: ${{ env.APP_FOLDER }}
         run: pip install -r requirements.txt
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Upload artifact for deployment jobs
+        working-directory: ${{ env.APP_FOLDER }}
         uses: actions/upload-artifact@v3
         with:
           name: python-app

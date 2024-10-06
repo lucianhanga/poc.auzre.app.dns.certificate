@@ -45,4 +45,30 @@ jobs:
           path: |
             ${{ env.APP_FOLDER }}/
             !${{ env.APP_FOLDER }}/venv/
-  
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # This ensures the deploy job runs after the build job
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: python-app
+
+      - name: Print files to be deployed
+        run: |
+          echo "Files that will be deployed:"
+          ls -R  # This recursively lists all files that will be deployed
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}  # The service principal credentials          
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'production'  # Optional: use if you have deployment slots
+          package: .  
